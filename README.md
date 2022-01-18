@@ -1,5 +1,5 @@
 # UReportGenerator
-批量生成UReport报表模板  
+自动根据数据库表结构批量生成UReport报表  
 1.配置PG数据信息在config.ini文件中  
 2.运行目录中的ReportGenerator.py批量生成ureport模板  
 3.将模板COPY到UReport模板目录中  
