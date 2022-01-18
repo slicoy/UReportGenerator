@@ -6,5 +6,7 @@
 ![image](https://user-images.githubusercontent.com/49675412/149872221-3860133c-047d-4922-9f7d-8781f36f177c.png)  
 4.浏览效果  
 ![image](https://user-images.githubusercontent.com/49675412/149874630-6b1790a0-915e-4f9a-9e61-e720e0f177ed.png)  
+![image](https://user-images.githubusercontent.com/49675412/149875681-f6ccbad3-ca6e-4000-9ba0-97f5d58c3be6.png)  
+
 
 
