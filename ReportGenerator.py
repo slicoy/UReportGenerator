@@ -4,11 +4,13 @@ Created on 20220116
 @author: Liuy
 """
 # 导入相关模块
-from jinja2 import Template, FileSystemLoader, Environment
+import pandas as pd
 import configparser
+from jinja2 import Template, FileSystemLoader, Environment
 from lib.DBinfo import DBinfo
 from lib.DBCore import DBCore
-import pandas as pd
+from lib.ReportInfo import ReportInfo,ReportInfoItems
+
 
 sql_structure ="""SELECT
   C .relname,
@@ -37,6 +39,12 @@ ORDER BY
 PGinfo= DBinfo()
 pgcore = DBCore()
 
+Rtsinfo = ReportInfo()
+rts_condition_info = Rtsinfo.getInfo()
+
+for rt_key in rts_condition_info:
+    print(rt_key+':'+rts_condition_info[rt_key].groupby)
+
 #生成PG结构的excel表单
 df_pglog = pgcore.ExcSQL_SuperDataFrame(sql = sql_structure,columnsname = ['relname','comment','field','type_length','description','notnull','iskey'])
 #df_pglog.to_excel(r"./log/源数据.xlsx")
@@ -51,6 +59,11 @@ for df1 , df2 in da1.groupby([0],as_index=True):
     print("-------df2-----------")
     print(df2)
     df2.columns = ['relname','comment','field','type_length','description','notnull','iskey']
+    rt_condition = {}
+    rt_condition_item = ReportInfoItems("none","","","","")
+    print(type(df1))
+    if df1 in rts_condition_info.keys():
+       rt_condition_item = rts_condition_info[df1]
     # 首先告诉Jinja2模块，jinja模板文件路径在哪？(如当前目录)
     j2_loader = FileSystemLoader('./template')
     # 然后定义一个环境，告诉jinja2，从哪里调用模板
@@ -58,7 +71,7 @@ for df1 , df2 in da1.groupby([0],as_index=True):
     # 之后通过 get_template 获取并载入模板
     j2_tmpl = env.get_template('./template.ureport.xml')
     # 最后传入参数，渲染模板
-    result = j2_tmpl.render(name="LY",host=PGinfo.db_host,port=PGinfo.db_port,database=PGinfo.db_database,password=PGinfo.db_password,tablename=df1,tableColInfoDataFrame=df2,sql="sql")
+    result = j2_tmpl.render(name="LY",host=PGinfo.db_host,port=PGinfo.db_port,database=PGinfo.db_database,password=PGinfo.db_password,tablename=df1,tableColInfoDataFrame=df2,rts_condition_info = rt_condition_item,sql="sql")
     filename = "report/" + str(df1) +".xml"
     f = open(filename,'w',encoding="utf-8")
     f.write(result) #将字符串写入文件中
