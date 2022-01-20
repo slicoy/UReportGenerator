@@ -10,34 +10,47 @@
 
 <!--- 标题列开始 -->
 
-{%set st_dict = ['A','B', 'C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] %}   
+
+{%set st_dict = ['A','B', 'C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] %}
+{%set seach = namespace(paramXml = "" )%}
+
+{%set groupColIndex = namespace(ordernum = -1 ) %}
+{%set group_cell = namespace(left_cell = '' ) %}
 {%for index,row in tableColInfoDataFrame.iterrows(): %}
 <cell expand="None" name="{{st_dict[loop.index-1]}}2" row="2" col="{{loop.index}}">
 	<cell-style font-size="8" forecolor="0,0,0" font-family="宋体" bgcolor="208,236,250" bold="true" align="center" valign="middle"><left-border width="1" style="solid" color="0,0,0"/><right-border width="1" style="solid" color="0,0,0"/><top-border width="1" style="solid" color="0,0,0"/><bottom-border width="1" style="solid" color="0,0,0"/></cell-style>
 	<simple-value><![CDATA[{{ row['description'] }}]]></simple-value>
 </cell>
+      {% if row['field'] == rts_condition_info.groupby:%}
+      {%    set groupColIndex.ordernum = loop.index    %}
+      {% endif %}
 {%endfor%}
-
 <!--- 标题列结束 -->
 
 <!--- 数据列开始 -->
+<!--- groupColIndex.ordernum 查找groupby的列 -->
 {%for index,row in tableColInfoDataFrame.iterrows(): %}
-<cell expand="Down" name="{{st_dict[loop.index-1]}}3" row="3" col="{{loop.index}}" fill-blank-rows="true">
-	
-	<cell-style font-size="10" forecolor="0,0,0" font-family="微软雅黑" bgcolor="255,255,255" wrap-compute="false" align="center" valign="middle"><left-border width="1" style="solid" color="0,0,0"/><right-border width="1" style="solid" color="0,0,0"/><top-border width="1" style="solid" color="0,0,0"/><bottom-border width="1" style="solid" color="0,0,0"/></cell-style>
-	
-	<dataset-value dataset-name="sources" aggregate="select" property="{{row['field']}}" order="none" mapping-type="simple">
-	</dataset-value>
-	
-	<condition-property-item name="cpage">
-		<paging position="after" line="0"/>
-		
-		<cell-style for-condition="true" font-size-scope="cell" forecolor="0,0,0" forecolor-scope="cell" font-family-scope="cell" bgcolor="240,245,255" bgcolor-scope="row" bold-scope="cell" italic-scope="row" underline-scope="cell" align-scope="cell" valign-scope="cell">
-		</cell-style>
-		
-		<condition type="expression" op="==" id="90df8270-677e-11ec-88ab-8b21062a86dd"><left><![CDATA[& A3 % 2]]></left><right><![CDATA[0]]></right>
-		</condition>
-	</condition-property-item>
+{%    if groupColIndex.ordernum != -1                %}
+{%       if groupColIndex.ordernum > loop.index      %}
+{%          set group_cell.left_cell = "left-cell =\"" + st_dict[groupColIndex.ordernum-1] + "3"+"\""  %}
+{%       elif  groupColIndex.ordernum == loop.index  %}
+{%          set group_cell.left_cell = "left-cell=\"root\""  %}
+{%       else                                        %}
+{%          set group_cell.left_cell = "left-cell =\"A3\"" %}
+{%       endif                                       %}
+{%    endif                                          %}
+
+<cell expand="Down" name="{{st_dict[loop.index-1]}}3" row="3" col="{{loop.index}}"  {{group_cell.left_cell}} top-cell="{{st_dict[loop.index-1]}}2"  fill-blank-rows="true">
+<cell-style font-size="10" forecolor="0,0,0" font-family="微软雅黑" bgcolor="255,255,255" wrap-compute="false" align="center" valign="middle"><left-border width="1" style="solid" color="0,0,0"/><right-border width="1" style="solid" color="0,0,0"/><top-border width="1" style="solid" color="0,0,0"/><bottom-border width="1" style="solid" color="0,0,0"/></cell-style>
+<dataset-value dataset-name="sources" aggregate="group" property="{{row['field']}}" order="none" mapping-type="simple">
+</dataset-value>
+<condition-property-item name="cpage">
+<paging position="after" line="0"/>
+<cell-style for-condition="true" font-size-scope="cell" forecolor="0,0,0" forecolor-scope="cell" font-family-scope="cell" bgcolor="240,245,255" bgcolor-scope="row" bold-scope="cell" italic-scope="row" underline-scope="cell" align-scope="cell" valign-scope="cell">
+</cell-style>
+<condition type="expression" op="==" id="90df8270-677e-11ec-88ab-8b21062a86dd"><left><![CDATA[& A3 % 2]]></left><right><![CDATA[0]]></right>
+</condition>
+</condition-property-item>
 </cell>
 {%endfor%}
 <!--- 数据列结束 -->
@@ -58,11 +71,28 @@
 
 <!--- 数据源定义开始 -->
 <datasource name="demo" type="jdbc" username="postgres" password="{{password}}" url="jdbc:postgresql://{{ host }}:{{ port }}/{{ database }}" driver="org.postgresql.Driver">
-	<dataset name="sources" type="sql">
-	<sql><![CDATA[select * from {{tablename}}]]></sql>
+<dataset name="sources" type="sql">
+<sql>
+{%  if rts_condition_info.seach == ""   %}
+<![CDATA[select * from {{tablename}} {{ rts_condition_info.where }} {{ rts_condition_info.orderby }}]]>
+{%  else                                %}
+<![CDATA[${
+ if(param("p_{{rts_condition_info.seach}}")==null || param("p_{{rts_condition_info.seach}}")==''){
+      return "select * from {{tablename}} "
+ }
+ else{
+      return "select * from {{tablename}} where {{rts_condition_info.seach}} = :p_{{rts_condition_info.seach}} {{ rts_condition_info.orderby }}"
+    }
+    }
+   ]]>
+{%  endif %}
+</sql>
 {% for index,row in tableColInfoDataFrame.iterrows():  %}
     <field name="{{row['field']}}"/>
 {% endfor %}
+{%  if rts_condition_info.seach != ""  %}
+<parameter name="p_{{rts_condition_info.seach}}" type="String" default-value=""/>
+{%  endif %}
 </dataset>
 </datasource>
 <!--- 数据源定义开结束 -->
@@ -73,5 +103,22 @@
     width="595" height="842" orientation="portrait" html-report-align="left" bg-image="" html-interval-refresh-value="0" column-enabled="false">
 </paper>
 <!--- 页定义结束 -->
+{%  if rts_condition_info.seach != ""  %}
+<search-form form-position="down">
+<grid show-border="false" type="Grid4x4x4x4"  border-width="2" border-color="#cccccc">
 
-<search-form form-position="up"/></ureport>
+<col size="2">
+<input-text label="{{rts_condition_info.seach}}" type="Text" label-position="left" bind-parameter="p_{{rts_condition_info.seach}}"     style="width: 16; height: 21" ></input-text>
+</col>
+
+<col size="1">
+<button-submit label="提交" align="left" type="Submit-button" style="btn-success">
+</button-submit>
+</col>
+<col size="1">
+<button-reset label="重置" align="left" type="Submit-button" style="btn-warning"></button-reset>
+</col>
+</grid>
+</search-form>
+{%  endif %}
+</ureport>
