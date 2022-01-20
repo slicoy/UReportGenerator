@@ -9,5 +9,15 @@
 ![image](https://user-images.githubusercontent.com/49675412/149874630-6b1790a0-915e-4f9a-9e61-e720e0f177ed.png)  
 ![image](https://user-images.githubusercontent.com/49675412/149875681-f6ccbad3-ca6e-4000-9ba0-97f5d58c3be6.png)  
 
+2022-01-20 增加了生成报表的搜索、分组合并、排序
+1.配置report-config.ini
+[sources]                 # 表名称
+where=where 1=1           # where 条件
+groupby=name              # 分组合并列名称
+orderby=order by name     # 排序条件
+seach=name                # 搜索列
+2.浏览效果
+![image](https://user-images.githubusercontent.com/49675412/150301475-70a57d50-2a9f-4ca0-957e-456529e1d17c.png)
+
 
 
